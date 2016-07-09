@@ -88,10 +88,17 @@ def candidateMatrix(fname, qname):
     for i, item in enumerate(ncList):
         cMap[i] = item
         inverseCMap[item] = i 
-         
+
     for i, (uid, cid) in enumerate(zip(uList, cList)):
         cm[inverseIdMap[uid],inverseCMap[cid]] = rList[i]
     print cm
+
+    if not os.path.exists('../matrix/canMatrix.pkl'):
+        with open('../matrix/canMatrix.pkl','wb') as fp:
+            pickle.dump(cm, fp)
+            pickle.dump(cMap, fp)
+            pickle.dump(inverseCMap, fp)
+    return cm, cMap, inverseCMap
    
 
 
