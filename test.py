@@ -22,8 +22,18 @@ def testBinary():
 def testCan():
     candidateMatrix(fname, qname)
 
-historyTFIDF(fname, qname)
+def testHCSimilarity():
+    f1 = '../matrix/train_100.pkl'
+    f2 = '../matrix/test_100.pkl'
+    hCSimilarity(f1, f2)
+
+
+
+rateCan(fname)
+#testHCSimilarity()
+#historyTFIDF(fname, qname)
 #testBinary()
-#testLoader()
+# testLoader()
+# testCan()
 # testDidMap()
 # testIdMap()

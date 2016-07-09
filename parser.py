@@ -5,6 +5,16 @@ import pickle
 import os
 from collections import defaultdict 
 
+root = '/Users/cici/Desktop/DataAnalysis/'
+
+def saveItem(item, fname):
+    ''' 
+        fname is the absolute path name 
+    '''
+    if not os.path.exists(fname):
+        with open(fname, 'wb') as fp:
+            pickle.dump(item, fp)
+
 
 def getUserIds(fname):
     fp = open(fname,'r')
@@ -13,24 +23,40 @@ def getUserIds(fname):
     for i, line in enumerate(fp):
         userRecords = json.loads(line)
         user_id = userRecords['id']
-        print len(userRecords['candidates'])
-        if i == 10 :
-            break 
         idMap[i] = user_id
         inverseIdMap[user_id] = i 
     return idMap, inverseIdMap
+
+def getDidsByUid(fname):
+    fp = open(fname,'r')
+    didbyuid = defaultdict(list)
+    for i, line in enumerate(fp):
+        userRecords = json.loads(line)
+        udoc = []
+        for item in userRecords['body']['person']['preferences']:
+            doc_id = item['documentId']
+            if check(os.path.join(root, 'Data', 'crawls', doc_id)):
+                udoc.append(doc_id)
+        didbyuid[i] = udoc 
+
+    return didbyuid
+
+def check(doc_id):
+    return True if os.path.exists(doc_id) else False 
 
 def getDocIds(fname):
     fp = open(fname,'r')
     allDocId = []
     didMap = {}
     inverseDidMap = {}
-    for line in fp:
+    for line in fp.readlines():
         userRecords = json.loads(line)
         for item in userRecords['body']['person']['preferences']:
             doc_id = item['documentId']
-            allDocId.append(doc_id)
+            if check(os.path.join(root, 'Data', 'crawls', doc_id)):
+                allDocId.append(doc_id)
     docId = set(allDocId)
+    print len(list(docId))
     for i, did in enumerate(docId):
         didMap[i] = did
         inverseDidMap[did] = i
@@ -53,10 +79,14 @@ def dataParser(fname):
         # pp.pprint(userRecords)
         user_id = userRecords['id']
         for item in userRecords['body']['person']['preferences']:
-            doc_id = item['documentId']
-            rating = item['rating']
-            ibm[inverseIdMap[user_id],inverseDidMap[doc_id]] = rating
+            if check(os.path.join(root, 'Data', 'crawls', item['documentId'])):
+                doc_id = item['documentId']
+                rating = item['rating']
+                i = inverseIdMap[user_id]
+                j = inverseDidMap[doc_id]
+                ibm[i,j] = rating
 
+    print ibm.shape 
     if not os.path.exists('../matrix/utility.pkl'):
         fp = open('../matrix/utility.pkl' , 'wb')
         pickle.dump(ibm, fp)
@@ -70,20 +100,33 @@ def getCandidateData(qname):
     rList = []
     for line in qp:
         items = line.strip().split('\t')
-        uList.append(int(items[0]))
-        cList.append(items[2])
-        rList.append(int(items[3]))
+        if check(os.path.join(root, 'Data', 'crawls', items[2])):
+            uList.append(int(items[0]))
+            cList.append(items[2])
+            rList.append(int(items[3]))
     return uList, cList, rList 
 
+def getHistoryCandidates(fname):
+    fp = open(fname, 'r')
+    canMap = defaultdict(list)
+    for line in fp :
+        userRecords = json.loads(line)
+        cand = userRecords['candidates']
+        # filter out none exist files 
+        cand = [ x for x in cand if check(os.path.join(root, 'Data', 'crawls', x))]
+        user_id = userRecords['id']
+        canMap[user_id] = cand 
+    return canMap
+
+
 def candidateMatrix(fname, qname):
+    '''
+        cm : the ground truth of user preferences over candiates 
+    '''
+
     # fp = open(fname, 'r')
     idMap, inverseIdMap = getUserIds(fname)
-    # canMap = defaultdict(list)
-    # for line in fp :
-    #     userRecords = json.loads(line)
-    #     cand = userRecords['candidates']
-    #     user_id = userRecords['id']
-    #     canMap[user_id] = cand 
+    
     uList, cList, rList = getCandidateData(qname)
     # print len(dList), len(list(set(dList)))
     nuList = list(set(uList))
@@ -97,7 +140,8 @@ def candidateMatrix(fname, qname):
 
     for i, (uid, cid) in enumerate(zip(uList, cList)):
         cm[inverseIdMap[uid],inverseCMap[cid]] = rList[i]
-    print cm
+
+    print cm.shape
 
     if not os.path.exists('../matrix/canMatrix.pkl'):
         with open('../matrix/canMatrix.pkl','wb') as fp:
