@@ -11,6 +11,6 @@ def testDidMap():
     print getDocIds(fname)
 def testIdMap():
     print getUserIds(fname)   
-# testLoader()
-testDidMap()
-testIdMap()
+testLoader()
+# testDidMap()
+# testIdMap()
