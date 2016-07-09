@@ -1,5 +1,5 @@
 from parser import *
-# from rec import * 
+from rec import * 
 root = '/Users/cici/Desktop/DataAnalysis/'
 import os
 fname = os.path.join(root, 'Data', 'batch_requests.json') 
@@ -22,7 +22,7 @@ def testBinary():
 def testCan():
     candidateMatrix(fname, qname)
 
-testCan()
+historyTFIDF(fname, qname)
 #testBinary()
 #testLoader()
 # testDidMap()

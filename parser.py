@@ -4,6 +4,8 @@ import numpy as np
 import pickle 
 import os
 from collections import defaultdict 
+
+
 def getUserIds(fname):
     fp = open(fname,'r')
     idMap = {}
@@ -11,6 +13,9 @@ def getUserIds(fname):
     for i, line in enumerate(fp):
         userRecords = json.loads(line)
         user_id = userRecords['id']
+        print len(userRecords['candidates'])
+        if i == 10 :
+            break 
         idMap[i] = user_id
         inverseIdMap[user_id] = i 
     return idMap, inverseIdMap
@@ -41,8 +46,7 @@ def dataParser(fname):
     idMap, inverseIdMap = getUserIds(fname)
     didMap, inverseDidMap = getDocIds(fname)
     ibm = np.zeros((len(idMap), len(didMap)))
-
-    print ibm.shape
+    # print ibm.shape
     # pp = pprint.PrettyPrinter(indent = 1)
     for line in fp:
         userRecords = json.loads(line)
@@ -59,16 +63,7 @@ def dataParser(fname):
     return ibm 
 
 
-def candidateMatrix(fname, qname):
-    # fp = open(fname, 'r')
-    idMap, inverseIdMap = getUserIds(fname)
-    # canMap = defaultdict(list)
-    # for line in fp :
-    #     userRecords = json.loads(line)
-    #     cand = userRecords['candidates']
-    #     user_id = userRecords['id']
-    #     canMap[user_id] = cand 
-
+def getCandidateData(qname):
     qp = open(qname, 'r')
     uList = []
     cList = []
@@ -78,7 +73,18 @@ def candidateMatrix(fname, qname):
         uList.append(int(items[0]))
         cList.append(items[2])
         rList.append(int(items[3]))
+    return uList, cList, rList 
 
+def candidateMatrix(fname, qname):
+    # fp = open(fname, 'r')
+    idMap, inverseIdMap = getUserIds(fname)
+    # canMap = defaultdict(list)
+    # for line in fp :
+    #     userRecords = json.loads(line)
+    #     cand = userRecords['candidates']
+    #     user_id = userRecords['id']
+    #     canMap[user_id] = cand 
+    uList, cList, rList = getCandidateData(qname)
     # print len(dList), len(list(set(dList)))
     nuList = list(set(uList))
     ncList = list(set(cList))
