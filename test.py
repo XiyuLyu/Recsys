@@ -25,11 +25,10 @@ def testCan():
 def testHCSimilarity():
     f1 = '../matrix/train_100.pkl'
     f2 = '../matrix/test_100.pkl'
-    hCSimilarity(f1, f2)
+    hCSimilarity(f1, f2, '../matrix/item_item_similarity_adjcose.pkl')
 
-
-
-rateCan(fname)
+rateCan(fname, '../matrix/item_item_similarity.pkl')
+#rateCan(fname, '../matrix/item_item_similarity_adjcose.pkl')
 #testHCSimilarity()
 #historyTFIDF(fname, qname)
 #testBinary()

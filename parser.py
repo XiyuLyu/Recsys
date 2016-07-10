@@ -15,6 +15,8 @@ def saveItem(item, fname):
         with open(fname, 'wb') as fp:
             pickle.dump(item, fp)
 
+def check(dname):
+    return True if os.path.exists(dname) else False 
 
 def getUserIds(fname):
     '''
@@ -67,9 +69,22 @@ def getDidsByUid(fname):
         didbyuid[i] = udoc 
 
     return didbyuid
+    
+def getCidsByUid(fname):
+    '''
+        from batch_requrest get user_id corresponding candidates
+    '''
 
-def check(dname):
-    return True if os.path.exists(dname) else False 
+    fp = open(fname, 'r')
+    cidbyuid = defaultdict(list)
+    for line in fp.readlines() :
+        userRecords = json.loads(line)
+        cand = userRecords['candidates']
+        # filter out none exist files 
+        cand = [ x for x in cand if check(os.path.join(root, 'Data', 'crawls', x))]
+        user_id = userRecords['id']
+        cidbyuid[user_id] = cand 
+    return cidbyuid
 
 def historyMatrix(fname):
     '''
@@ -119,27 +134,12 @@ def getCandidateData(qname):
             uList.append(int(items[0]))
             cList.append(items[2])
             rList.append(int(items[3]))
-    return uList, cList, rList 
-
-def getHistoryCandidates(fname):
-    '''
-        from batch_requrest get user_id corresponding candidates
-    '''
-
-    fp = open(fname, 'r')
-    canMap = defaultdict(list)
-    for line in fp.readlines() :
-        userRecords = json.loads(line)
-        cand = userRecords['candidates']
-        # filter out none exist files 
-        cand = [ x for x in cand if check(os.path.join(root, 'Data', 'crawls', x))]
-        user_id = userRecords['id']
-        canMap[user_id] = cand 
-    return canMap
-
+    return uList, cList, rList
 
 def candidateMatrix(fname, qname):
-    '''
+    '''        
+        input : batch_requrest.json and qrel
+        output : ((number of users) x (all_candidate_docs)) matrix
         cm : the ground truth of user preferences over candiates 
     '''
 
