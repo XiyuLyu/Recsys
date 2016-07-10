@@ -25,14 +25,17 @@ def binarize(data):
     return hdata 
 
 def historyTFIDF(fname, qname):
-    didMap , dummpy = getDocIds(fname)
+    didMap , dummy = getDocIds(fname)
     tfidf = TfidfVectorizer(max_features = 100)
     history = []
     candidate = []
-    dummpy, cList, dummpy = getCandidateData(qname)
+    dummy, cList, dummy = getCandidateData(qname)
     cList = list(set(cList))
-    count = 0
+    # count = 0
     for i, v in enumerate(didMap.values()):
+        '''
+            deal with histories
+        ''' 
         fn = os.path.join(root, 'Data', 'crawls', v)
         if os.path.exists(fn):
             contents = open(fn, 'r').read()
@@ -46,9 +49,13 @@ def historyTFIDF(fname, qname):
     print train.shape 
 
     for i, v in enumerate(cList): 
+        '''
+            deal with candidates
+        '''         
+
         fn = os.path.join(root, 'Data', 'crawls', v)
-        if i % 100 == 0 :
-            print i 
+        # if i % 100 == 0 :
+        #     print i 
         if os.path.exists(fn):
             contents = open(fn, 'r').read()
             candidate.append(contents)

@@ -17,6 +17,9 @@ def saveItem(item, fname):
 
 
 def getUserIds(fname):
+    '''
+        from batch_requrest get index and user_id map
+    '''
     fp = open(fname,'r')
     idMap = {}
     inverseIdMap = {}
@@ -27,24 +30,10 @@ def getUserIds(fname):
         inverseIdMap[user_id] = i 
     return idMap, inverseIdMap
 
-def getDidsByUid(fname):
-    fp = open(fname,'r')
-    didbyuid = defaultdict(list)
-    for i, line in enumerate(fp):
-        userRecords = json.loads(line)
-        udoc = []
-        for item in userRecords['body']['person']['preferences']:
-            doc_id = item['documentId']
-            if check(os.path.join(root, 'Data', 'crawls', doc_id)):
-                udoc.append(doc_id)
-        didbyuid[i] = udoc 
-
-    return didbyuid
-
-def check(doc_id):
-    return True if os.path.exists(doc_id) else False 
-
 def getDocIds(fname):
+    '''
+        from batch_requrest get index and history_id map
+    '''
     fp = open(fname,'r')
     allDocId = []
     didMap = {}
@@ -62,10 +51,30 @@ def getDocIds(fname):
         inverseDidMap[did] = i
     return didMap, inverseDidMap
 
-def dataParser(fname):
+def getDidsByUid(fname):
+    '''
+        from batch_requrest get user_id with corresponding histories
+    '''
+    fp = open(fname,'r')
+    didbyuid = defaultdict(list)
+    for i, line in enumerate(fp):
+        userRecords = json.loads(line)
+        udoc = []
+        for item in userRecords['body']['person']['preferences']:
+            doc_id = item['documentId']
+            if check(os.path.join(root, 'Data', 'crawls', doc_id)):
+                udoc.append(doc_id)
+        didbyuid[i] = udoc 
+
+    return didbyuid
+
+def check(dname):
+    return True if os.path.exists(dname) else False 
+
+def historyMatrix(fname):
     '''
         input : batch_requrest.json file
-        output : a 211 x  matrix
+        output : ((number of users) x (all_history_docs)) matrix
     '''
     fp = open(fname, 'r')
     data = []
@@ -74,7 +83,7 @@ def dataParser(fname):
     ibm = np.zeros((len(idMap), len(didMap)))
     # print ibm.shape
     # pp = pprint.PrettyPrinter(indent = 1)
-    for line in fp:
+    for line in fp.readlines():
         userRecords = json.loads(line)
         # pp.pprint(userRecords)
         user_id = userRecords['id']
@@ -94,11 +103,17 @@ def dataParser(fname):
 
 
 def getCandidateData(qname):
+    '''
+        from qrel get three lists
+        list of user_ids
+        list of candidates
+        list of ratings
+    '''
     qp = open(qname, 'r')
     uList = []
     cList = []
     rList = []
-    for line in qp:
+    for line in qp.readlines():
         items = line.strip().split('\t')
         if check(os.path.join(root, 'Data', 'crawls', items[2])):
             uList.append(int(items[0]))
@@ -107,9 +122,13 @@ def getCandidateData(qname):
     return uList, cList, rList 
 
 def getHistoryCandidates(fname):
+    '''
+        from batch_requrest get user_id corresponding candidates
+    '''
+
     fp = open(fname, 'r')
     canMap = defaultdict(list)
-    for line in fp :
+    for line in fp.readlines() :
         userRecords = json.loads(line)
         cand = userRecords['candidates']
         # filter out none exist files 
