@@ -2,7 +2,8 @@ import numpy as np
 import pickle
 from parser import * 
 from sklearn.feature_extraction.text import  TfidfVectorizer
-
+from sklearn.metrics.pairwise import cosine_similarity
+from scipy import spatial
 root = '/Users/cici/Desktop/DataAnalysis/'
 
 def loadUtility():
@@ -23,7 +24,10 @@ def normalize(hdata):
 
 def historyTFIDF(fname, qname):
     didMap , dummy = getDocIds(fname)
-    tfidf = TfidfVectorizer(max_features = 100)
+    num_features = 100
+    # tfidf = TfidfVectorizer(max_features = num_features, analyzer = 'word',
+                            # ngram_range = (1,3) , stop_words = 'english')
+    tfidf = TfidfVectorizer(max_features = num_features)#, analyzer = 'word', stop_words = 'english')
     history = []
     candidate = []
     dummy, cList, dummy = getCandidateData(qname)
@@ -35,13 +39,15 @@ def historyTFIDF(fname, qname):
         ''' 
         fn = os.path.join(root, 'Data', 'crawls', v)
         if os.path.exists(fn):
-            contents = open(fn, 'r').read()
-            history.append(contents)
+            # contents = open(fn, 'r').read()
+            # history.append(contents)
+            history.append( readTRECCS(fn) )
     #print history 
     train = tfidf.fit_transform(history)
-    if not os.path.exists('../matrix/train_100.pkl'):
-        with open('../matrix/train_100.pkl', 'wb') as fp:
-            pickle.dump(train, fp)
+    saveItem(train,  '../matrix/train_' + str(num_features) + '.pkl')
+    # if not os.path.exists('../matrix/train_100.pkl'):
+    #     with open('../matrix/train_100.pkl', 'wb') as fp:
+    #         pickle.dump(train, fp)
 
     print train.shape 
 
@@ -54,14 +60,15 @@ def historyTFIDF(fname, qname):
         # if i % 100 == 0 :
         #     print i 
         if os.path.exists(fn):
-            contents = open(fn, 'r').read()
-            candidate.append(contents)
-
+            # contents = open(fn, 'r').read()
+            # candidate.append(contents)
+            candidate.append( readTRECCS(fn) )
     
     test = tfidf.transform(candidate)
-    if not os.path.exists('../matrix/test_100.pkl'):
-        with open('../matrix/test_100.pkl', 'wb') as fp:
-            pickle.dump(test, fp)
+    saveItem(test, '../matrix/test_' + str(num_features) + '.pkl')
+    # if not os.path.exists('../matrix/test_100.pkl'):
+    #     with open('../matrix/test_100.pkl', 'wb') as fp:
+    #         pickle.dump(test, fp)
 
     print test.shape
 
@@ -85,16 +92,22 @@ def hCSimilarity(train_fn, test_fn, save_fn):
     test  = pickle.load(fp).toarray()
     result = np.zeros((len(train), len(test)))
 
-    for i in range(len(train)):
-        for j in range(len(test)):
-            result[i][j] = adjustedCosine(train[i,:], test[j,:])
-            
+    # for i in range(len(train)):
+    #     for j in range(len(test)):
+    #         na = np.linalg.norm(train[i,:])
+    #         nb = np.linalg.norm(test[i,:])
+    #         if na == 0 or nb == 0 :
+    #             result[i, j] = 0
+    #         else:
+    #             #result[i][j] = np.dot(train[i,:], test[j,:])/na/nb
+    #             # result[i][j] = cosine_similarity(train[i,:], test[j,:])
+    #             result[i][j] = 1 - spatial.distance.cosine(train[i,:], test[j,:])
+    result = cosine_similarity(train, test)
     saveItem(result, save_fn)
 
     # if not os.path.exists('../matrix/item_item_similarity.pkl'):
     #     with open('../matrix/item_item_similarity.pkl', 'wb') as fp:
     #         pickle.dump(result, fp)
-
 def evaluateRankMean(item):
     k = 5 
     return 1 if np.mean(np.sort(item)[::-1][:k]) > 0.5 else 0 
@@ -103,19 +116,22 @@ def evaluateByMean(item):
     return 1 if np.mean(item) > 0.5 else 0
 
 def evaluateWeightedMean(item, rating):
+    rating = normalize(rating)
+    sigma = 0.01 
     # k = 5 
     # topkIndex = np.argsort(item)[::-1][:k] 
     # item = item[topkIndex]
     # rating = rating[topkIndex]
-    rating = normalize(rating)
     #print np.dot(item, rating), np.sum(item)
-    return 1 if (np.dot(item, rating) + 0.01)/(np.sum(item) + 0.01) > 0.5 else 0 
+    # return 1 if (np.dot(item, rating) + 0.01)/(np.sum(item) + 0.01) > 0.5 else 0 
+    r =  (np.dot(item, rating) + sigma)/(np.sum(item) + sigma) 
+    return r 
 
 
 def rateCan(fname, similarity_fn):
     idMap, inverseIdMap = getUserIds(fname)
     didMap, inverseDidMap = getDocIds(fname)
-    historyCanMap = getHistoryCandidates(fname)
+    cidbyuid = getCidsByUid(fname)
     didbyuid = getDidsByUid(fname)
     with open('../matrix/utility.pkl', 'rb') as fp:
         utility = pickle.load(fp)
@@ -134,28 +150,51 @@ def rateCan(fname, similarity_fn):
     fp = 0
 
     for uk, uv in idMap.items():
-        candidates = historyCanMap[uv]
+        candidates = cidbyuid[uk]
         preferences = didbyuid[uk]
         preferences_ids = [ inverseDidMap[k] for k in preferences]
         rating = utility[uk, preferences_ids]
         for candidate in candidates:
             can_id = inverseCMap[candidate]
             tmp = item_item_similarity[preferences_ids , can_id]
-            
-            #predict_uid_cid= 1 if np.mean(tmp)  > 0.5 else 0
             # predict_uid_cid = evaluateRankMean(tmp)
             predict_uid_cid = evaluateWeightedMean(tmp, rating)
-            if predict_uid_cid == 1 and cm[uk, can_id] == 0:
-                fp = fp + 1
-            elif predict_uid_cid == 1 and cm[uk, can_id] == 1:
-                tp = tp + 1
+    #         if predict_uid_cid == 1 and cm[uk, can_id] == 0:
+    #             fp = fp + 1
+    #         elif predict_uid_cid == 1 and cm[uk, can_id] == 1:
+    #             tp = tp + 1
             prediction[uk, can_id] = predict_uid_cid
 
-    #from sklearn.metrics import precision_score
-    #print 'precision is {}'.format(precision_score(np.reshape(cm,1, np.prod(cm.shape)), np.reshape(prediction, 1, np.prod(cm.shape))))
+    # print 'precision is {}'.format(tp * 1.0/(tp + fp))
+    saveItem(prediction, os.path.join(root, 'matrix', 'prediction.pkl'))
+
+def rateTopK(k,fname):
+    idMap, inverseIdMap = getUserIds(fname)
+    with open('../matrix/prediction.pkl','rb') as fp:
+        prediction = pickle.load(fp)
+    with open('../matrix/canMatrix.pkl','rb') as fp:
+        cm = pickle.load(fp)
+        cMap = pickle.load(fp) 
+        inverseCMap  = pickle.load(fp)
+    tp = 0
+    fp = 0
+    for uk in idMap.keys():
+        topk = np.argsort(prediction[uk, :])[::-1][:k]
+        print prediction[uk, topk]
+        for i in topk:
+            if prediction[uk, i] >= 0.5 and cm[uk, i] == 0:
+                fp = fp + 1
+            elif prediction[uk, i] >= 0.5 and cm[uk, i] == 1:
+                tp = tp + 1            
     print 'precision is {}'.format(tp * 1.0/(tp + fp))
 
-    #print 'error rate : {}'.format(error * 1.0/211.0/30.0) 
- 
-    saveItem(prediction, os.path.join(root, 'matrix', 'prediction.pkl'))
+
+
+
+
+
+
+
+
+
 

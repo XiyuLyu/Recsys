@@ -25,12 +25,15 @@ def testCan():
 def testHCSimilarity():
     f1 = '../matrix/train_100.pkl'
     f2 = '../matrix/test_100.pkl'
-    hCSimilarity(f1, f2, '../matrix/item_item_similarity_adjcose.pkl')
+    hCSimilarity(f1, f2, '../matrix/item_item_similarity.pkl')
 
+historyTFIDF(fname, qname)
+testHCSimilarity()
 rateCan(fname, '../matrix/item_item_similarity.pkl')
+rateTopK(5,fname)
 #rateCan(fname, '../matrix/item_item_similarity_adjcose.pkl')
-#testHCSimilarity()
-#historyTFIDF(fname, qname)
+#
+#readTRECCS('../Data/crawls/TRECCS-00000005-418')
 #testBinary()
 # testLoader()
 # testCan()

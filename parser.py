@@ -11,9 +11,9 @@ def saveItem(item, fname):
     ''' 
         fname is the absolute path name 
     '''
-    if not os.path.exists(fname):
-        with open(fname, 'wb') as fp:
-            pickle.dump(item, fp)
+
+    with open(fname, 'wb') as fp:
+        pickle.dump(item, fp)
 
 def check(dname):
     return True if os.path.exists(dname) else False 
@@ -77,13 +77,13 @@ def getCidsByUid(fname):
 
     fp = open(fname, 'r')
     cidbyuid = defaultdict(list)
-    for line in fp.readlines() :
+    for i, line in enumerate(fp) :
         userRecords = json.loads(line)
         cand = userRecords['candidates']
         # filter out none exist files 
         cand = [ x for x in cand if check(os.path.join(root, 'Data', 'crawls', x))]
-        user_id = userRecords['id']
-        cidbyuid[user_id] = cand 
+        # user_id = userRecords['id']
+        cidbyuid[i] = cand 
     return cidbyuid
 
 def historyMatrix(fname):
@@ -111,9 +111,10 @@ def historyMatrix(fname):
                 ibm[i,j] = rating
 
     print ibm.shape 
-    if not os.path.exists('../matrix/utility.pkl'):
-        fp = open('../matrix/utility.pkl' , 'wb')
-        pickle.dump(ibm, fp)
+    saveItem(ibm,'../matrix/utility.pkl')
+    # if not os.path.exists('../matrix/utility.pkl'):
+    #     fp = open('../matrix/utility.pkl' , 'wb')
+    #     pickle.dump(ibm, fp)
     return ibm 
 
 
@@ -168,6 +169,36 @@ def candidateMatrix(fname, qname):
             pickle.dump(cMap, fp)
             pickle.dump(inverseCMap, fp)
     return cm, cMap, inverseCMap
-   
 
+def readTRECCS(fn):
+    fp = open(fn, 'r')
+    #pp = pprint.PrettyPrinter(indent = 4)
+    line = fp.read()
+    data = json.loads(line)
+    item = []
+    i = 0
+    for key in data.keys():    
+        try :
+            if 'name' in data[key].keys():
+                if type(data[key]['name']) == str:
+                    item.append(data[key]['name'])
+                else:
+                    #assert type(data[key]['name']) == list
+                    item.append(data[key]['name'][0])
+            if 'categories' in data[key].keys():
+                if type(data[key]['name']) == str:
+                    item.append(data[key]['categories'])
+                else:
+                    item.append(data[key]['categories'][0])
 
+            for record in data[key]['reviews_detail']:
+                item.append(record['comment'])
+                if 'user_location' in record.keys():
+                    item.append(record['user_location'])
+
+            result = ' '.join(item)
+        except :
+            i = i + 1
+            print i 
+            result = line 
+    return result 
