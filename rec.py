@@ -24,10 +24,10 @@ def normalize(hdata):
 
 def historyTFIDF(fname, qname):
     didMap , dummy = getDocIds(fname)
-    num_features = 100
+    num_features = 1000
     # tfidf = TfidfVectorizer(max_features = num_features, analyzer = 'word',
                             # ngram_range = (1,3) , stop_words = 'english')
-    tfidf = TfidfVectorizer(max_features = num_features)#, analyzer = 'word', stop_words = 'english')
+    tfidf = TfidfVectorizer(max_features = num_features, analyzer = 'word', stop_words = 'english')
     history = []
     candidate = []
     dummy, cList, dummy = getCandidateData(qname)
@@ -39,12 +39,16 @@ def historyTFIDF(fname, qname):
         ''' 
         fn = os.path.join(root, 'Data', 'crawls', v)
         if os.path.exists(fn):
-            # contents = open(fn, 'r').read()
-            # history.append(contents)
-            history.append( readTRECCS(fn) )
+            contents = open(fn, 'r').read()
+            history.append(contents)
+            # history.append( readTRECCS(fn) )
     #print history 
+    # train_history, val_history = history[:2800], history[2800:]
+    # train = tfidf.fit_transform(train_history)
+    # val = tfidf.transform(val_history)
     train = tfidf.fit_transform(history)
     saveItem(train,  '../matrix/train_' + str(num_features) + '.pkl')
+    # saveItem(train,  '../matrix/val_' + str(num_features) + '.pkl')
     # if not os.path.exists('../matrix/train_100.pkl'):
     #     with open('../matrix/train_100.pkl', 'wb') as fp:
     #         pickle.dump(train, fp)
@@ -60,9 +64,9 @@ def historyTFIDF(fname, qname):
         # if i % 100 == 0 :
         #     print i 
         if os.path.exists(fn):
-            # contents = open(fn, 'r').read()
-            # candidate.append(contents)
-            candidate.append( readTRECCS(fn) )
+            contents = open(fn, 'r').read()
+            candidate.append(contents)
+            # candidate.append( readTRECCS(fn) )
     
     test = tfidf.transform(candidate)
     saveItem(test, '../matrix/test_' + str(num_features) + '.pkl')
@@ -117,7 +121,7 @@ def evaluateByMean(item):
 
 def evaluateWeightedMean(item, rating):
     rating = normalize(rating)
-    sigma = 0.01 
+    sigma = 0.001 
     # k = 5 
     # topkIndex = np.argsort(item)[::-1][:k] 
     # item = item[topkIndex]

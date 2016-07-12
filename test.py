@@ -23,8 +23,8 @@ def testCan():
     candidateMatrix(fname, qname)
 
 def testHCSimilarity():
-    f1 = '../matrix/train_100.pkl'
-    f2 = '../matrix/test_100.pkl'
+    f1 = '../matrix/train_1000.pkl'
+    f2 = '../matrix/test_1000.pkl'
     hCSimilarity(f1, f2, '../matrix/item_item_similarity.pkl')
 
 historyTFIDF(fname, qname)
