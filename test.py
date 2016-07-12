@@ -28,9 +28,9 @@ def testHCSimilarity():
     hCSimilarity(f1, f2, '../matrix/item_item_similarity.pkl')
 
 
-historyMatrix(fname)
-candidateMatrix(fname, qname)
-historyTFIDF(fname, qname)
-testHCSimilarity()
-rateCan(fname, '../matrix/item_item_similarity.pkl')
-rateTopK(5,fname)
+historyMatrix(fname)          # generate the utility matrix
+candidateMatrix(fname, qname)  # generate ground truth
+historyTFIDF(fname, qname)     # build TF-IDF, where you can change the dimension inside    
+testHCSimilarity()             # build similarity between history and candidate items
+rateCan(fname, '../matrix/item_item_similarity.pkl')  # create prediction 
+rateTopK(5,fname)               # p@5 
