@@ -27,15 +27,10 @@ def testHCSimilarity():
     f2 = '../matrix/test_1000.pkl'
     hCSimilarity(f1, f2, '../matrix/item_item_similarity.pkl')
 
+
+historyMatrix(fname)
+candidateMatrix(fname, qname)
 historyTFIDF(fname, qname)
 testHCSimilarity()
 rateCan(fname, '../matrix/item_item_similarity.pkl')
 rateTopK(5,fname)
-#rateCan(fname, '../matrix/item_item_similarity_adjcose.pkl')
-#
-#readTRECCS('../Data/crawls/TRECCS-00000005-418')
-#testBinary()
-# testLoader()
-# testCan()
-# testDidMap()
-# testIdMap()
