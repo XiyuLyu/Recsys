@@ -135,6 +135,7 @@ def getCandidateData(qname):
             uList.append(int(items[0]))
             cList.append(items[2])
             rList.append(int(items[3]))
+
     return uList, cList, rList
 
 def candidateMatrix(fname, qname):

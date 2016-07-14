@@ -192,7 +192,52 @@ def rateTopK(k,fname):
                 tp = tp + 1            
     print 'precision is {}'.format(tp * 1.0/(tp + fp))
 
+def format(k,fname, qname):
+    cidbyuid = getCidsByUid(fname)
 
+
+    idMap, inverseIdMap = getUserIds(fname)
+    with open('../matrix/prediction.pkl','rb') as fp:
+        prediction = pickle.load(fp)
+    with open('../matrix/canMatrix.pkl','rb') as fp:
+        cm = pickle.load(fp)
+        cMap = pickle.load(fp) 
+        inverseCMap  = pickle.load(fp)
+    output = np.zeros((len(idMap)*k, 6))
+    wp = open('output.txt','wb')
+    
+    for uk, uv in idMap.items():
+        candidate_list = cidbyuid[uk]
+
+        inver_list = [ inverseCMap[x] for x in candidate_list]
+
+        predIndex = np.argsort(prediction[uk, inver_list])[::-1]
+        #print predIndex
+
+
+        predIndex = [ inver_list[x] for x in predIndex ]
+        #print predIndex
+
+        cids = []
+        for index in predIndex:
+            cid = cMap[index]
+            cids.append(cid) 
+        #print len(cids)
+        score = prediction[uk, predIndex]
+
+        for i in range( len(cids) ):
+            tmp = []
+            tmp.append(str(uv))
+            tmp.append('0')
+            tmp.append(cids[i])
+            tmp.append('0')
+            tmp.append(str(score[i]))
+            tmp.append('temp_run')
+            tmp = '\t'.join(tmp) + '\n'
+            wp.write(tmp)
+
+    
+    wp.close()
 
 
 
